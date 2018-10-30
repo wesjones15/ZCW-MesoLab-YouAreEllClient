@@ -596,7 +596,7 @@ function addMessageToThread(message) {
     messageListItem
         .appendChild(userIdHeading)
         .appendChild(messageParagraph);
-    messageList.appendChild(messageListItem);
+    document.getElementById("message-list").appendChild(messageListItem);
 }
 ```
 * Does this code look familiar? Before we move forward, let's go back and refactor our ``populateThread`` method to use this ``addMessageToThread`` method.
@@ -636,3 +636,8 @@ function createFormListener() {
     }
 };
 ```
+* Navigate back to your browser and refresh. Type a message into the form and hit submit. Scroll down to the bottom of the list to see your new message.
+* Bonus:
+    * Try to make the new message append to the top, instead of the bottom
+    OR
+    * Try to make the the message container stay scrolled to the bottom
