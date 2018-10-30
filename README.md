@@ -25,7 +25,7 @@
 
 ### Part 0.0 - Familiarize Yourself with the Project Structure
 
-* Your project contains two files, ``index.html``, ``index.js`` and ``styles.css``, providing you with the basic html structure of the project and some basic styles.
+* Your project contains two files, ``index.html`` and ``styles.css``, providing you with the basic html structure of the project and some basic styles.
 
 ### Part 0.1 - Serve your project
 
@@ -41,7 +41,6 @@
     * For the ``async`` attribute, assign it a value of ``true``. Typically, when an HTML file hits a ``<script>`` tag, it stops parsing the HTML, downloads the JavaScript, and then executes the JavaScript. ``async="true"`` overrides this behavior, instead allowing the HTML to be parsed **alongside** downloading the JavaScript. Once the JavaScript is finished downloading, the HTML parsing is paused and the script executes. [Read more about async and defer](https://www.growingwiththeweb.com/2014/02/async-vs-defer-attributes.html)
 * At the top of your ``index.html`` file, declare a new variable called ``currentUser`` and assign it your YouAreEll username (You should have made one in the previous YouAreEll lab).
 * [Add an event listener](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener) to the [``window``](https://developer.mozilla.org/en-US/docs/Web/API/Window) object. The ``addEventListener`` method takes two parameters, the type of event you're listening for (examples include "load", "click", "keydown", etc), and a function reference, known as a [callback](), representing the function you want to invoke when the event occurs. Wraping code in a "load" event listener attached to the ``window`` object will insure that your code is only ran once the page has loaded.
-* 
 ```javascript
 let userId = "dominiqueclarke";
 
@@ -102,14 +101,14 @@ window.addEventListener("load", function () {
 
 ### Part 3.0 - Creating AJAX HTTP Requests
 
-* In ``message-service.js``, create a method called ``getAllMessages``, which takes a single parameter, ``userId``.
+* In ``message-service.js``, create a method called ``getAllMessages``, which takes 0 parameters
 * Create a ``XMLHTTPRequest`` (XHR) object and assign it to a variable called ``request``. XMLHttpRequest (XHR) objects  interact with servers through ``HTTP`` requests. You can retrieve data from a URL without having to do a full page refresh. XMLHttpRequest is used heavily in [Ajax](https://developer.mozilla.org/en-US/docs/Web/Guide/AJAX/Getting_Started) programming.
 * Use the [``open``](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/open) method on the ``request`` object, passing the type of ``HTTP`` request you'd like to make and the request endpoint as the first two arguments. To get all the global messages, use the ``/messages/`` endpoint. Refer back to the original [YouAreEll lab](https://git.zipcode.rocks/ZipCodeWilmington/YouAreEll) for documentation on the API if necessary.
 * Use the [``send``](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/send) method to send the request. This method takes an optional parameter of the request ``body`` when necessary.
 ```javascript
 export default class MessageService {
 
-    getAllMessages(userId) {
+    getAllMessages() {
         let request = new XMLHttpRequest();
 
         request.open("GET", "http://zipcode.rocks:8085/messages");
@@ -123,7 +122,7 @@ export default class MessageService {
 
 * We've configured and sent the request, but what happens when we receive the request back? We can define a function to be used once the response is received using the [``onload``](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequestEventTarget/onload) property of the ``request`` object.
 ```javascript
-getAllMessages(userId) {
+getAllMessages() {
     let request = new XMLHttpRequest();
 
     // Setup our listener to process compeleted requests
@@ -139,7 +138,7 @@ getAllMessages(userId) {
 * If the status is greater than or equal to 200 and less than 300, than we have a successful response. Else, we have an error. Create an if/else statement to handle the response or error.
 * The response is stored in the ``responseText`` property of the ``request`` object as an array of [JSON](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON) objects. To convert it into an array of JavaScript objects, use ``JSON.parse(request.responseText)``. 
 ```javascript
-getAllMessages(userId) {
+getAllMessages() {
     let request = new XMLHttpRequest();
 
     // Setup our listener to process compeleted requests
@@ -165,64 +164,21 @@ const messageService = new MessageService(userId);
 
 window.addEventListener("load", function () {
     document.getElementById("greeting").innerHTML = `Welcome ${userId}!`;
-    messageService.getAllMessages(userId);
+    messageService.getAllMessages();
 });
 ```
 * Refresh your browser. Right click on the page and select ``inspect``. When the dev tools container pops up, click the ``console`` tab. Once the response is returned, you should see the returned array of messages printed to the console.
 
-<!-- ## Part 3.7 - Convert Message Array to Threads Object
-
-* Our API returns an array of messages from various users. Create a helper method on ``MessageService`` class called ``parseThreads`` to convert this array into an object. Our object will act kinda like a hashmap, with a key representing the ``fromId``, and the value being an array of messages with that ``fromId``. ``parseThreads`` should take one parameter, the array of ``messages``. Looping through the array, check to see if the ``threads`` object has a key for the current message's ``fromId``. If not, first create the new key and assign it an empty array, then push the message to the array. If the ``threads`` object does contain a key representing the current message's ``fromId``, push the message to the array. Once you've iterated through the messages, return the ``threads`` object.
-
-```javascript
-parseThreads(messages) {
-    const threads = {};
-
-    messages.forEach(message => { 
-        if (!threads.hasOwnProperty(message.fromid)) {
-            threads[message.fromid] = [];
-            threads[message.fromid].push(message);
-        } else {
-            threads[message.fromid].push(message);
-        }
-    });  
-
-    return threads;
-}
-```
-* Using the ``parseThreads`` method, edit your ``getAllMessages`` function to parse the ``response.responseText`` from an array to an object.
-    * You may be tempted to call the function using the ``this`` keyword. Keep in mind that ``this`` within the ``onload`` function refers to the ``request`` object, not the ``MessageService`` object. In order to refer to the ``MessageService`` within ``request.onload``, we need to capture the context of ``MessageService`` in a new variable called ``self``. This will capture the context of the ``MessageService`` object, and you can use ``self`` as opposed to ``this`` to refer to the ``MessageService`` object.
-```javascript
-getAllMessages(userId) {
-    let request = new XMLHttpRequest();
-    let self = this;
-
-    // Setup our listener to process compeleted requests
-    request.onload = function() {
-        if (request.status >= 200 && request.status < 300) {
-            console.log(self.parseThreads(JSON.parse(request.responseText))); // 'This is the returned text.'
-        } else {
-            console.log('Error: ' + request.status); // An error occurred during the request.
-        }
-    };
-
-    request.open("GET", `${this.apiUri}/ids/${userId}/messages`);
-
-    request.send();
-}
-``` -->
-* Refresh the page and check your console for your outputted ``threads`` object.
-
 ### Part 4.0 - Promise based AJAX requests
 
-* Our current ``getAllMessages`` method has some issues. XMLHTTPRequests are processed asynchronously using callbacks. Callbacks cannot contain a return value. This makes it difficult to pass back a value to ``index.js`` where this ``messageService.getAllMessages(userId)`` is being called. Fortunately, we can alieviate this issue using [``promises``](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise).
+* Our current ``getAllMessages`` method has some issues. XMLHTTPRequests are processed asynchronously using callbacks. Callbacks cannot contain a return value. This makes it difficult to pass back a value to ``index.js`` where this ``messageService.getAllMessages()`` is being called. Fortunately, we can alieviate this issue using [``promises``](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise).
     * A [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) is an object representing a contract to preform some task asynchronous (often, an ``HTTP`` request), providing a value (often, an ``HTTP`` response) when the task is complete.
     * Promises allow us to continue running syncronous code while waiting for for the execution of the promised task.
     * Promises allow us to specify a function that should be run once the task is complete using the ``then`` method.
     * Promises are tricky. Familiarize yourself with Promises with [this tutorial](https://www.sitepoint.com/overview-javascript-promises/)
 * Wrap your ``request.onload`` function in a ``new`` ``Promise``;
 ```javascript
-getAllMessages(userId) {
+getAllMessages() {
     const request = new XMLHttpRequest();
 
     new Promise(function (resolve, reject) {
@@ -244,7 +200,7 @@ getAllMessages(userId) {
 ```
 * If the request is successful, ``resolve`` the ``promise`` passing in the ``threads`` object``
 ```javascript
-getAllMessages(userId) {
+getAllMessages() {
     const request = new XMLHttpRequest();
 
     new Promise(function (resolve, reject) {
@@ -267,7 +223,7 @@ getAllMessages(userId) {
 ```
 * If the request returns an error, ``reject`` the ``promise`` passing in the ``threads`` object``
 ```javascript
-getAllMessages(userId) {
+getAllMessages() {
     const request = new XMLHttpRequest();
 
     new Promise(function (resolve, reject) {
@@ -295,7 +251,7 @@ getAllMessages(userId) {
     * The [``then``](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/then) method is part of the ``Promise`` interface. It takes up to two parameters: a ``callback`` function for the success case and a callback function for the failure case of the ``Promise``.
     * If the ``Promise`` is successful, the first parameter (the success callback), is executed. If the ``Promise`` results in an error, the second parameter (the failure callback), is excuted.  
 ```javascript
-getAllMessages(userId) {
+getAllMessages() {
     const request = new XMLHttpRequest();
 
     new Promise(function (resolve, reject) {
@@ -330,7 +286,7 @@ getAllMessages(userId) {
 ```
 * When the callbacks are executed, the receive a special parameter. The success callback receives the value passed to the ``resolve`` method, while the failure callback receives the value passed to the ``reject`` method.
 ```javascript
-getAllMessages(userId) {
+getAllMessages() {
     const request = new XMLHttpRequest();
 
     new Promise(function (resolve, reject) {
@@ -374,7 +330,7 @@ getAllMessages(userId) {
 * Remove the ``then`` method, ``successCallback`` declaration and ``errorCallback`` declaration from ``getAllMessages``.
 * ``return`` the Promise from the ``getAllMessages`` method. This will allow us to call the ``then`` method, passing in the appropriate success and failure callbacks, elsewhere. 
 ```javascript
-getAllMessages(userId) {
+getAllMessages() {
     const request = new XMLHttpRequest();
 
     return new Promise(function (resolve, reject) {
@@ -403,7 +359,7 @@ getAllMessages(userId) {
 ```
 * Navigate back to your ``index.js`` file. ``getAllMessages`` now returns a ``Promise``. We can now use the ``then`` method to specify a ``callback`` function to be executed in case of success or failure of that ``Promise``. Call ``.then`` on ``messageService.getAllMessages``, reimplementing the original code.
 ```javascript
-messageService.getAllMessages(userId)
+messageService.getAllMessages()
     .then(successCallback, errorCallback);
 
 function successCallback(response) {
@@ -430,7 +386,7 @@ const messageService = new MessageService(userId);
 window.addEventListener("load", function () {
 
     document.getElementById("greeting").innerHTML = `Welcome ${userId}!`;
-    messageService.getAllMessages(userId)
+    messageService.getAllMessages()
         .then(successCallback, errorCallback);
 
     function successCallback(response) {
@@ -523,7 +479,7 @@ function populateThread(messages) {
 ```javascript
 window.addEventListener("load", function () {
     document.getElementById("greeting").innerHTML = `Welcome ${userId}!`;
-    messageService.getAllMessages(userId)
+    messageService.getAllMessages()
         .then(successCallback, errorCallback);
 
     function successCallback(response) {
