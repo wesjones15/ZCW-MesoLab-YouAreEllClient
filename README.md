@@ -1,7 +1,7 @@
 # ZCW-MesoLabs-YouAreEllClient
 
 ## **Objective:**
-* Write a font-end client that interacts with the YouAreEll RESTful API. 
+* Write a front-end client that interacts with the YouAreEll RESTful API. 
 * The client should visually display the user's message threads, with each thread containing a list of messages to and from another user.
 * The client should allow the user to post a new message to a particular user.
 
